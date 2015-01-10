@@ -24,71 +24,92 @@ use Monolog\Handler\SyslogHandler;
 
 class UsfLogger {
 
-    private $loggers = [];
+    private $logger;
+    private $name;
+    private $location = '/var/log/usf-logger.log';
+    private $logLevel = 'info';
+    private $facility = 'usf-logger';
+    private $syslogLevel = 'local6';
 
-    public function __construct($name, $location){
-        // Create a file-based log channel
-        $this->loggers[$name] = $this->addStreamHandler($name, $location);
+    public function __construct($name = 'log', $type = 'file'){
+        $this->name = $name;
+        $this->logger = new Logger($name);
+        $this->addLogHandler($type);
     }
 
-    public function addStreamHandler($name, $location){
-        if (! array_key_exists($name, $this->loggers)){
-            $this->loggers[$name] = new Logger($name);
+    public function addLogHandler($type){
+        switch ($type){
+            case 'file':
+                $this->logger->pushHandler(new StreamHandler($this->location, $this->loggerLevel($this->logLevel)));
+                break;
+
+            case 'firebug':
+                $this->logger->pushHandler(new FirePHPHandler());
+                break;
+
+            case 'syslog':
+                $syslog = new SyslogHandler($this->facility, $this->syslogLevel);
+                $formatter = new LineFormatter("%channel%.%level_name%: %message% %extra%");
+                $syslog->setFormatter($formatter);
+                $this->logger->pushHandler($syslog);
+                break;
+
+            default:
+                throw new \Exception("Unknown Log Handler", 1);
+                break;
         }
-        $this->loggers[$name]->pushHandler(new StreamHandler($location, Logger::INFO));
     }
 
-    public function addFirePHPHandler($name){
-        if (! array_key_exists($name, $this->loggers)){
-            $this->loggers[$name] = new Logger($name);
+    public function setLogLevel($level){
+        $this->logLevel = $level;
+    }
+
+    public function setLocation($location){
+        $this->location = $location;
+    }
+
+    private function loggerLevel(){
+        switch ($this->logLevel){
+            case 'debug':
+                return Logger::DEBUG;
+                break;
+
+            case 'info':
+                return Logger::INFO;
+                break;
+
+            case 'notice':
+                return Logger::NOTICE;
+                break;
+
+            case 'warn':
+                return Logger::WARNING;
+                break;
+
+            case 'error':
+                return Logger::ERROR;
+                break;
+
+            case 'critical':
+                return Logger::CRITICAL;
+                break;
+
+            case 'alert':
+                return Logger::ALERT;
+                break;
+
+            case 'emergency':
+                return Logger::EMERGENCY;
+                break;
+
+            default:
+                throw new \Exception("Unknown Log Level", 1);
+                break;
         }
-        $this->loggers[$name]->pushHandler(new FirePHPHandler());
+
     }
 
-    public function addSyslogHandler($name, $facility, $level){
-        if (! array_key_exists($name, $this->loggers)){
-            $this->loggers[$name] = new Logger($name);
-        }
-        $syslog = new SyslogHandler($facility, $level);
-        $formatter = new LineFormatter("%channel%.%level_name%: %message% %extra%");
-        $syslog->setFormatter($formatter);
-        $this->loggers[$name]->pushHandler($syslog);
-    }
-
-    public function debug($name, $message, $context = []){
-        return $this->loggers[$name]->addDebug($message, $context);
-    }
-
-    public function info($name, $message, $context = []){
-        return $this->loggers[$name]->addInfo($message, $context);
-    }
-
-    public function notice($name, $message, $context = []){
-        return $this->loggers[$name]->addNotice($message, $context);
-    }
-
-    public function warn($name, $message, $context = []){
-        return $this->loggers[$name]->addWarning($message, $context);
-    }
-
-    public function error($name, $message, $context = []){
-        return $this->loggers[$name]->addError($message, $context);
-    }
-
-    public function critical($name, $message, $context = []){
-        return $this->loggers[$name]->addCritical($message, $context);
-    }
-
-    public function alert($name, $message, $context = []){
-        return $this->loggers[$name]->addAlert($message, $context);
-    }
-
-    public function emergency($name, $message, $context = []){
-        return $this->loggers[$name]->addEmergency($message, $context);
-    }
-
-
-    public function __call($name, $arguments){
-        return $this->$arguments[0]($name, $arguments[1], $arguments[2]);
+    public function __get($name){
+        return $this->logger;
     }
 }

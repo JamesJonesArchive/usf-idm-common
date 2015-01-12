@@ -18,18 +18,27 @@ namespace USF\IdM;
 
 use Monolog\Logger;
 use Monolog\Formatter\LineFormatter;
+use Monolog\Formatter\HtmlFormatter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\FirePHPHandler;
 use Monolog\Handler\SyslogHandler;
+use Monolog\Handler\SwiftMailerHandler;
+use Swift_Mailer;
+use Swift_SmtpTransport;
+use Swift_Message;
 
 class UsfLogger {
 
     private $logger;
     private $name;
+    private $mailConfig;
     private $location = '/var/log/usf-logger.log';
     private $logLevel = 'info';
     private $facility = 'usf-logger';
     private $syslogLevel = 'local6';
+    private $from = ['root@localhost' => 'USF IdM Admin'];
+    private $to = [];
+    private $subject = 'Log Message';
 
     public function __construct($name = 'log', $type = 'file'){
         $this->name = $name;
@@ -54,10 +63,57 @@ class UsfLogger {
                 $this->logger->pushHandler($syslog);
                 break;
 
+            case 'mail':
+                // Throw exception if no email address has been set.
+                if ($this->to == []){
+                    throw new \Exception("No email addresses have been set!", 1);
+                }
+
+                // Create the Swift_mail transport
+                $transport = Swift_SmtpTransport::newInstance(
+                    $this->mailConfig['host'],
+                    $this->mailConfig['port'], 'ssl')
+                        ->setUsername(
+                            $this->mailConfig['username'])
+                        ->setPassword(
+                            $this->mailConfig['password']);
+
+                // Create the Mailer using your created Transport
+                $mailer = Swift_Mailer::newInstance($transport);
+
+                // Create a message
+                $message = Swift_Message::newInstance($this->subject)
+                    ->setFrom($this->from)
+                    ->setTo($this->to)
+                    ->setBody('', 'text/html');
+
+                $htmlFormatter = new HtmlFormatter();
+
+                $mailStream = new SwiftMailerHandler($mailer, $message, Logger::WARNING);
+                $mailStream->setFormatter($htmlFormatter);
+                $this->logger->pushHandler($mailStream);
+                break;
+
             default:
                 throw new \Exception("Unknown Log Handler", 1);
                 break;
         }
+    }
+
+    public function addTo($toAddress){
+        if(is_array($toAddress)){
+            $this->to[] = $this->to + $toAddress;
+        } else {
+            $this->to[] = $toAddress;
+        }
+    }
+
+    public function setFrom($fromArray){
+        $this->from = $fromArray;
+    }
+
+    public function setSubject($subject){
+        $this->subject = $subject;
     }
 
     public function setLogLevel($level){
@@ -66,6 +122,10 @@ class UsfLogger {
 
     public function setLocation($location){
         $this->location = $location;
+    }
+
+    public function setMailConfig($mailConfig){
+        $this->mailConfig = $mailConfig;
     }
 
     private function loggerLevel(){

@@ -1,0 +1,13 @@
+
+mailConfig:
+    log_level: warn
+    host:   smtp.gmail.com
+    port:   465
+    username:   username
+    password:   secret
+    subject:    Log Message
+    from:
+        root@localhost: USF IdM Admin
+    to:
+        - epierce@mail.usf.edu
+        - cims-tech-core@mail.usf.edu

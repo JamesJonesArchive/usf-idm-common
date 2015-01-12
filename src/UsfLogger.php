@@ -29,69 +29,71 @@ use Swift_Message;
 
 class UsfLogger {
 
-    private $logger;
+    private $logger = [];
     private $name;
-    private $mailConfig;
-    private $location = '/var/log/usf-logger.log';
-    private $logLevel = 'info';
-    private $facility = 'usf-logger';
-    private $syslogLevel = 'local6';
-    private $from = ['root@localhost' => 'USF IdM Admin'];
-    private $to = [];
-    private $subject = 'Log Message';
+    private $defaultLogLevel = 'warn';
 
     public function __construct($name = 'log', $type = 'file'){
-        $this->name = $name;
-        $this->logger = new Logger($name);
-        $this->addLogHandler($type);
+        $this->addLogger($name, $type, ['log_location' => '/var/log/usf-logger.log', 'log_level' => 'warn']);
     }
 
-    public function addLogHandler($type){
+    public function addLogger($name, $type, $options = []){
+        $this->name = $name;
+        $this->logger[$name] = new Logger($name);
+        $this->addLogHandler($type, $options);
+    }
+
+    public function addLogHandler($type, $options){
+        // Throw exception if no handler configuration has been set. FirePHPHandler is the exception, it doesn't
+        // have any config options.
+        if ($options == []){
+            throw new \Exception("Missing handler configuration!", 1);
+        }
+
+        // Set the log level if one wasn't given.
+        if (! $options['log_level']) $options['log_level'] = $this->defaultLogLevel;
+
+        // Add the requested handler
         switch ($type){
             case 'file':
-                $this->logger->pushHandler(new StreamHandler($this->location, $this->loggerLevel($this->logLevel)));
+                $this->logger[$this->name]->pushHandler(new StreamHandler($options['log_location'], $this->loggerLevel($options['log_level'])));
                 break;
 
             case 'firebug':
-                $this->logger->pushHandler(new FirePHPHandler());
+                $this->logger[$this->name]->pushHandler(new FirePHPHandler());
                 break;
 
             case 'syslog':
-                $syslog = new SyslogHandler($this->facility, $this->syslogLevel);
+                $syslog = new SyslogHandler($options['facility'], $options['syslogLevel']);
                 $formatter = new LineFormatter("%channel%.%level_name%: %message% %extra%");
                 $syslog->setFormatter($formatter);
-                $this->logger->pushHandler($syslog);
+                $this->logger[$this->name]->pushHandler($syslog);
                 break;
 
             case 'mail':
-                // Throw exception if no email address has been set.
-                if ($this->to == []){
-                    throw new \Exception("No email addresses have been set!", 1);
-                }
-
                 // Create the Swift_mail transport
                 $transport = Swift_SmtpTransport::newInstance(
-                    $this->mailConfig['host'],
-                    $this->mailConfig['port'], 'ssl')
+                    $options['host'],
+                    $options['port'], 'ssl')
                         ->setUsername(
-                            $this->mailConfig['username'])
+                            $options['username'])
                         ->setPassword(
-                            $this->mailConfig['password']);
+                            $options['password']);
 
                 // Create the Mailer using your created Transport
                 $mailer = Swift_Mailer::newInstance($transport);
 
                 // Create a message
-                $message = Swift_Message::newInstance($this->subject)
-                    ->setFrom($this->from)
-                    ->setTo($this->to)
+                $message = Swift_Message::newInstance($options['subject'])
+                    ->setFrom($options['from'])
+                    ->setTo($options['to'])
                     ->setBody('', 'text/html');
 
                 $htmlFormatter = new HtmlFormatter();
 
-                $mailStream = new SwiftMailerHandler($mailer, $message, Logger::WARNING);
+                $mailStream = new SwiftMailerHandler($mailer, $message, $this->loggerLevel($options['log_level']));
                 $mailStream->setFormatter($htmlFormatter);
-                $this->logger->pushHandler($mailStream);
+                $this->logger[$this->name]->pushHandler($mailStream);
                 break;
 
             default:
@@ -100,36 +102,13 @@ class UsfLogger {
         }
     }
 
-    public function addTo($toAddress){
-        if(is_array($toAddress)){
-            $this->to[] = $this->to + $toAddress;
-        } else {
-            $this->to[] = $toAddress;
-        }
-    }
-
-    public function setFrom($fromArray){
-        $this->from = $fromArray;
-    }
-
-    public function setSubject($subject){
-        $this->subject = $subject;
-    }
-
-    public function setLogLevel($level){
-        $this->logLevel = $level;
-    }
-
-    public function setLocation($location){
-        $this->location = $location;
-    }
-
-    public function setMailConfig($mailConfig){
-        $this->mailConfig = $mailConfig;
+    public function setDefaultLogLevel($log_level){
+        $this->defaultLogLevel = $log_level;
     }
 
     private function loggerLevel(){
         switch ($this->logLevel){
+            case 'trace':
             case 'debug':
                 return Logger::DEBUG;
                 break;
@@ -143,6 +122,7 @@ class UsfLogger {
                 break;
 
             case 'warn':
+            case 'warning':
                 return Logger::WARNING;
                 break;
 
@@ -150,6 +130,7 @@ class UsfLogger {
                 return Logger::ERROR;
                 break;
 
+            case 'crit':
             case 'critical':
                 return Logger::CRITICAL;
                 break;
@@ -170,6 +151,6 @@ class UsfLogger {
     }
 
     public function __get($name){
-        return $this->logger;
+        return $this->logger[$name];
     }
 }

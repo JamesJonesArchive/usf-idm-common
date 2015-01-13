@@ -10,4 +10,4 @@ mailConfig:
         root@localhost: USF IdM Admin
     to:
         - epierce@mail.usf.edu
-        - cims-tech-core@mail.usf.edu
+        - epierc@usf.edu

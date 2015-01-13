@@ -60,6 +60,11 @@ class UsfLoggerCollection {
         $this->logger[$name] = new UsfLogger($name);
         $this->logger[$name]->setDefaultLogLevel($this->defaultLogLevel);
         $this->logger[$name]->addLogHandler($type, $options);
+
+        //Add the web processor if this is not running on the command-line
+        if (php_sapi_name() !== "cli") {
+            $this->logger[$name]->addProcessor('web');
+        }
     }
 
     /**

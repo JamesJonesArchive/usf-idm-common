@@ -23,6 +23,8 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Handler\FirePHPHandler;
 use Monolog\Handler\SyslogHandler;
 use Monolog\Handler\SwiftMailerHandler;
+use Monolog\Processor\IntrospectionProcessor;
+use Monolog\Processor\WebProcessor;
 use Swift_Mailer;
 use Swift_SmtpTransport;
 use Swift_Message;
@@ -113,6 +115,31 @@ class UsfLogger extends Logger{
                 throw new \Exception("Unknown Log Handler", 1);
                 break;
         }
+    }
+
+    /**
+     * Wraps the creation of log processors so they can be created in a standard way.
+     *
+     * @param string $type     Type of log processor to add
+     *
+     * @throws \Exception
+     */
+    public function addProcessor($type){
+        switch ($type) {
+            case 'web':
+                $this->pushProcessor(new WebProcessor());
+                break;
+
+            case 'intro':
+            case 'introspection':
+                $this->pushProcessor(new IntrospectionProcessor());
+                break;
+
+            default:
+                throw new \Exception("Unknown Log Processor", 1);
+                break;
+        }
+
     }
 
     /**

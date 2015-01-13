@@ -68,18 +68,25 @@ class UsfLogger extends Logger{
         // Set the log level if one wasn't given.
         if (! $options['log_level']) $options['log_level'] = $this->defaultLogLevel;
 
+        // Allow messages to "bubble-up" the stack to other handlers
+        if (! $options['bubble']) $options['bubble'] = true;
+
         // Add the requested handler
         switch ($type){
             case 'file':
-                $this->pushHandler(new StreamHandler($options['log_location'], $this->loggerLevel($options['log_level'])));
+                $this->pushHandler(new StreamHandler($options['log_location'],
+                                                     $this->loggerLevel($options['log_level']),
+                                                     $options['bubble']
+                                                    )
+                );
                 break;
 
             case 'firebug':
-                $this->pushHandler(new FirePHPHandler());
+                $this->pushHandler(new FirePHPHandler($this->loggerLevel($options['log_level']),$options['bubble']));
                 break;
 
             case 'syslog':
-                $syslog = new SyslogHandler($options['facility'], $options['syslogLevel']);
+                $syslog = new SyslogHandler($options['facility'], $options['syslogLevel'], $options['bubble']);
                 $formatter = new LineFormatter("%channel%.%level_name%: %message% %extra%");
                 $syslog->setFormatter($formatter);
                 $this->pushHandler($syslog);
@@ -106,7 +113,11 @@ class UsfLogger extends Logger{
 
                 $htmlFormatter = new HtmlFormatter();
 
-                $mailStream = new SwiftMailerHandler($mailer, $message, $this->loggerLevel($options['log_level']));
+                $mailStream = new SwiftMailerHandler($mailer,
+                                                     $message,
+                                                     $this->loggerLevel($options['log_level']),
+                                                     $options['bubble']
+                );
                 $mailStream->setFormatter($htmlFormatter);
                 $this->pushHandler($mailStream);
                 break;

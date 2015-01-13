@@ -2,18 +2,18 @@
 
 require_once('vendor/autoload.php');
 
-use USF\IdM\UsfLogger;
+use USF\IdM\UsfLoggerCollection;
 use USF\IdM\UsfConfig;
 
 $config = new UsfConfig('config');
 
-// Calling UsfLogger with no options creates a loghandler that writes messages to /var/log/usf-logger.log
-$logger = new UsfLogger();
+// Calling UsfLoggerCollection with no options creates a loghandler that writes messages to /var/log/usf-logger.log
+$logger = new UsfLoggerCollection();
 
 // log an error message with extra array data
 $logger->log->warn('This is a test message.', ['foo' => 'bar']);
 
-// Create a LogHandler that emails audit reports
+// Add a LogHandler that emails audit reports
 $logger->addLogger('audit', 'mail', $config->mailConfig);
 
 //Send an email

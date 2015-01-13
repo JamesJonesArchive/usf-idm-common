@@ -27,22 +27,35 @@ use Swift_Mailer;
 use Swift_SmtpTransport;
 use Swift_Message;
 
-class UsfLogger {
+/**
+ * Class UsfLogger
+ *
+ * Extends Monolog ({@link https://github.com/Seldaek/monolog}) with default settings for USF IdM projects.  Includes
+ * support for the following log handlers:
+ * -File ({@link https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/StreamHandler.php})
+ * -FirePHP ({@link https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/FirePHPHandler.php})
+ * -Syslog ({@link https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/SyslogHandler.php})
+ * -Email ({@link https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/SwiftMailHandler.php})
+ *
+ * @package USF\IdM
+ * @author Eric Pierce <epierce@usf.edu>
+ * @copyright 2015 University of South Florida
+ */
+class UsfLogger extends Logger{
 
-    private $logger = [];
-    private $name;
+    /**
+     * @var string Default logging level
+     */
     private $defaultLogLevel = 'warn';
 
-    public function __construct($name = 'log', $type = 'file'){
-        $this->addLogger($name, $type, ['log_location' => '/var/log/usf-logger.log', 'log_level' => 'warn']);
-    }
-
-    public function addLogger($name, $type, $options = []){
-        $this->name = $name;
-        $this->logger[$name] = new Logger($name);
-        $this->addLogHandler($type, $options);
-    }
-
+    /**
+     * Wraps the creation of log handlers so they can be created in a standard way.
+     *
+     * @param string $type     Type of log handler to create
+     * @param array  $options  Configuration options for log handler
+     *
+     * @throws \Exception
+     */
     public function addLogHandler($type, $options){
         // Throw exception if no handler configuration has been set. FirePHPHandler is the exception, it doesn't
         // have any config options.
@@ -56,18 +69,18 @@ class UsfLogger {
         // Add the requested handler
         switch ($type){
             case 'file':
-                $this->logger[$this->name]->pushHandler(new StreamHandler($options['log_location'], $this->loggerLevel($options['log_level'])));
+                $this->pushHandler(new StreamHandler($options['log_location'], $this->loggerLevel($options['log_level'])));
                 break;
 
             case 'firebug':
-                $this->logger[$this->name]->pushHandler(new FirePHPHandler());
+                $this->pushHandler(new FirePHPHandler());
                 break;
 
             case 'syslog':
                 $syslog = new SyslogHandler($options['facility'], $options['syslogLevel']);
                 $formatter = new LineFormatter("%channel%.%level_name%: %message% %extra%");
                 $syslog->setFormatter($formatter);
-                $this->logger[$this->name]->pushHandler($syslog);
+                $this->pushHandler($syslog);
                 break;
 
             case 'mail':
@@ -93,7 +106,7 @@ class UsfLogger {
 
                 $mailStream = new SwiftMailerHandler($mailer, $message, $this->loggerLevel($options['log_level']));
                 $mailStream->setFormatter($htmlFormatter);
-                $this->logger[$this->name]->pushHandler($mailStream);
+                $this->pushHandler($mailStream);
                 break;
 
             default:
@@ -102,12 +115,24 @@ class UsfLogger {
         }
     }
 
+    /**
+     * Set the default logging level for this handler
+     *
+     * @param string $log_level Logging level
+     */
     public function setDefaultLogLevel($log_level){
         $this->defaultLogLevel = $log_level;
     }
 
-    private function loggerLevel(){
-        switch ($this->logLevel){
+    /**
+     * Get the Monolog constants for log levels.
+     *
+     * @param  string $level Log level name (debug, info, etc)
+     * @return int
+     * @throws \Exception
+     */
+    private function loggerLevel($level){
+        switch ($level){
             case 'trace':
             case 'debug':
                 return Logger::DEBUG;
@@ -150,7 +175,4 @@ class UsfLogger {
 
     }
 
-    public function __get($name){
-        return $this->logger[$name];
-    }
 }

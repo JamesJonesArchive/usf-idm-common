@@ -19,14 +19,14 @@ namespace USF\IdM;
 /**
  * Class UsfConfig
  *
- * Wrapper around Configula with defaults for USF IdM.
+ * Wrapper around Configula ({@link https://github.com/caseyamcl/Configula}) with defaults for USF IdM.
  *
  * @package USF\IdM\UsfConfig
  */
 class UsfConfig extends \Configula\Config{
 
     /**
-     * Just call the parent constructor with a default location.
+     * Just call the parent constructor with a default location (/usr/local/etc/idm_config).
      *
      * @param string $config_location
      * @param array  $defaults

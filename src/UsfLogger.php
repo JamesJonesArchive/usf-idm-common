@@ -66,10 +66,10 @@ class UsfLogger extends Logger{
         }
 
         // Set the log level if one wasn't given.
-        if (! $options['log_level']) $options['log_level'] = $this->defaultLogLevel;
+        if (! array_key_exists('log_level',$options)) $options['log_level'] = $this->defaultLogLevel;
 
         // Allow messages to "bubble-up" the stack to other handlers
-        if (! $options['bubble']) $options['bubble'] = true;
+        if (! array_key_exists('bubble',$options)) $options['bubble'] = true;
 
         // Add the requested handler
         switch ($type){
@@ -87,7 +87,7 @@ class UsfLogger extends Logger{
 
             case 'syslog':
                 $syslog = new SyslogHandler($options['facility'], $options['syslogLevel'], $options['bubble']);
-                $formatter = new LineFormatter("%channel%.%level_name%: %message% %extra%");
+                $formatter = new LineFormatter("%channel%.%level_name%: %message% %context% %extra%");
                 $syslog->setFormatter($formatter);
                 $this->pushHandler($syslog);
                 break;
@@ -120,6 +120,21 @@ class UsfLogger extends Logger{
                 );
                 $mailStream->setFormatter($htmlFormatter);
                 $this->pushHandler($mailStream);
+                break;
+
+            case 'sms':
+                $twilio = new TwilioHandler($options['account_sid'],
+                                            $options['auth_token'],
+                                            $options['from_numbers'],
+                                            $options['to_numbers'],
+                                            $options['log_level'],
+                                            $options['bubble']
+                );
+
+                $formatter = new LineFormatter("%channel%.%level_name%: %message% %context%");
+                $twilio->setFormatter($formatter);
+
+                $this->pushHandler($twilio);
                 break;
 
             default:

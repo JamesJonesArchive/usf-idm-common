@@ -1,5 +1,6 @@
-
+#Email config
 mailConfig:
+    # minimum level to send emails for
     log_level: warn
     host:   smtp.gmail.com
     port:   465
@@ -11,3 +12,18 @@ mailConfig:
     to:
         - epierce@mail.usf.edu
         - epierc@usf.edu
+
+# SMS config
+smsConfig:
+    #minimum level to send text messages for
+    log_level: critical
+    #Twilio account ID
+    account_sid: getFromTwilioDashboard
+    #Twilio API authentication token
+    auth_token: getFromTwilioDashboard
+    # Twilio phone number(s) - use multiple for high volume
+    from_numbers:
+        - +15555555555
+    # Phone numbers to send messages to
+    to_numbers:
+        - +18638675309

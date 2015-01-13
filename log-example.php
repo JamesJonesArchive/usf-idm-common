@@ -15,6 +15,7 @@ $logger->log->warn('This is a test message.', ['foo' => 'bar']);
 
 // Add a LogHandler that emails audit reports
 $logger->addLogger('audit', 'mail', $config->mailConfig);
+$logger->audit->addLogHandler('sms',$config->smsConfig);
 
 //Send an email
 $logger->audit->alert('Audit Test', ['foo' => 'bar', 'black' => 'white', 'yes' => 'no']);

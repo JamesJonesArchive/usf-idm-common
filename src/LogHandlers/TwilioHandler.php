@@ -1,6 +1,6 @@
 <?php
 
-namespace USF\IdM;
+namespace USF\IdM\LogHandlers;
 
 use Monolog\Logger;
 use Monolog\Handler\AbstractProcessingHandler;

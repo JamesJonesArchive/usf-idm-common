@@ -4,11 +4,14 @@ require_once ('../vendor/autoload.php');
 
 use USF\IdM\UsfEncryption;
 
-$string =  UsfEncryption::encrypt("12345678901234561234567890123456", "this is a test");
+//AES-256 requires a 32-character key
+$key = "12345678901234561234567890123456";
 
-echo $string."\n";
+$crypt = UsfEncryption::encrypt($key, "this is a test");
 
-echo UsfEncryption::decrypt("12345678901234561234567890123456", $string);
+echo "Encrypted string: ".$crypt."\n";
+
+echo "Decrypted string: ".UsfEncryption::decrypt($key, $crypt);
 
 
 ?>

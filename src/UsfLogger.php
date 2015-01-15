@@ -28,6 +28,7 @@ use Monolog\Processor\WebProcessor;
 use Swift_Mailer;
 use Swift_SmtpTransport;
 use Swift_Message;
+use USF\IdM\LogHandlers\TwilioHandler;
 
 /**
  * Class UsfLogger
@@ -38,6 +39,7 @@ use Swift_Message;
  * -FirePHP ({@link https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/FirePHPHandler.php})
  * -Syslog ({@link https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/SyslogHandler.php})
  * -Email ({@link https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/SwiftMailHandler.php})
+ * -SMS (TwilioHandler.php)
  *
  * @package USF\IdM
  * @author Eric Pierce <epierce@usf.edu>
@@ -150,7 +152,7 @@ class UsfLogger extends Logger{
      *
      * @throws \Exception
      */
-    public function addProcessor($type){
+    public function addLogProcessor($type){
         switch ($type) {
             case 'web':
                 $this->pushProcessor(new WebProcessor());

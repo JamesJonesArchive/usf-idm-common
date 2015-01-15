@@ -1,5 +1,5 @@
 {
-    "name": "epierce/usf-idm-common",
+    "name": "usf-it/usf-idm-common",
     "description": "Common libraries for USF Identity Management services.",
     "type": "library",
     "license": "Apache-2.0",

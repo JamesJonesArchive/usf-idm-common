@@ -46,9 +46,19 @@ class SlimLogMiddleware extends \Slim\Middleware{
                 $logger = new UsfLogRegistry();
                 if(is_array($env['log.config'])) {
 
+                    $logger_list = [];
+
                     // Setup the loggers and add them to the registry
                     foreach($env['log.config'] as $log_writer) {
-                        $logger->addLogger ($log_writer['name'], $log_writer['type'], $log_writer['config']);
+                        // Does this logger already exist?
+                        if (in_array($log_writer['name'], $logger_list )) {
+                            // Add a handler to an existing logger
+                            $logger->$log_writer['name']->addLogHandler($log_writer['type'], $log_writer['config']);
+                        } else {
+                            // Create a new logger
+                            $logger->addLogger ($log_writer['name'], $log_writer['type'], $log_writer['config']);
+                            $logger_list[] = $log_writer['name'];
+                        }
                         //Add Log processors
                         if(array_key_exists('processor',$log_writer))
                             $logger->$log_writer['name']->addLogProcessor ($log_writer['processor']);

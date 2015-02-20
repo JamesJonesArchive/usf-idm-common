@@ -13,7 +13,8 @@ $app->environment['auth.interceptUrlMap'] = ['GET' => ['/**' => ['authN' => 'CAS
 
 $app->environment['log.config'] = [
     ['name'=>'audit', 'type' => 'file', 'config' => ['log_location' => '/tmp/audit.out'], 'processor' => 'introspection'],
-    ['name'=>'debug', 'type' => 'file', 'default' => true, 'config' => ['log_level' => 'debug', 'log_location' => '/tmp/debug.out']]
+    ['name'=>'debug', 'type' => 'file', 'default' => true, 'config' => ['log_level' => 'debug', 'log_location' => '/tmp/debug.out']],
+    ['name'=>'audit', 'type' => 'file', 'config' => ['log_location' => '/tmp/err.out', 'log_level' => 'error']]
 ];
 
 //Add the Logging Middleware
@@ -27,10 +28,14 @@ $app->get('/foo', function () use ($app) {
     print_r($app->environment['principal.attributes']);
 
     $app->log->debug->warn($app->environment['principal.name']);
+
+    //This should go to /tmp/audit.out
     $app->log->audit->warn("test",$app->environment['principal.attributes']);
 
-    //This is using the default logger
+    //This is using the default logger and should go to /tmp/debug.out
     $app->log->alert('this is an alert!');
 
+    //This should go to /tmp/audit.out AND /tmp/err.out
+    $app->log->audit->error('This is an error!');
 });
 $app->run();

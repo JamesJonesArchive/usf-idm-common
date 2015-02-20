@@ -46,12 +46,26 @@ class SlimLogMiddleware extends \Slim\Middleware{
                 $logger = new UsfLogRegistry();
                 if(is_array($env['log.config'])) {
 
+                    // Setup the loggers and add them to the registry
                     foreach($env['log.config'] as $log_writer) {
                         $logger->addLogger ($log_writer['name'], $log_writer['type'], $log_writer['config']);
+                        //Add Log processors
                         if(array_key_exists('processor',$log_writer))
                             $logger->$log_writer['name']->addLogProcessor ($log_writer['processor']);
+                        //Set default handler
+                        if(array_key_exists('default',$log_writer) && $log_writer['default'] == true){
+                            $logger->setDefaultHandler($log_writer['name']);
+                            $env['slim.log.default'] = $log_writer['name'];
+                        }
                     }
                     $env['slim.log'] = $logger;
+
+                    //If the user didn't specify a default handler, use the first one in the config array
+                    if (empty($env['slim.log.default'])){
+                        $logger->setDefaultHandler($env['log.config'][0]['name']);
+                        $env['slim.log.default'] = $env['log.config'][0]['name'];
+                    }
+
                     return $logger;
                 } else {
                     throw \Exception('Environmental config "log.config" required!');

@@ -712,12 +712,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/USF-IT/usf-idm-common.git",
-                "reference": "89ee2dfe4815d06417d799dde06428b433c5d2c4"
+                "reference": "ceaf4246925592c5b2ca3a94158046674362e5e1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/USF-IT/usf-idm-common/zipball/89ee2dfe4815d06417d799dde06428b433c5d2c4",
-                "reference": "89ee2dfe4815d06417d799dde06428b433c5d2c4",
+                "url": "https://api.github.com/repos/USF-IT/usf-idm-common/zipball/ceaf4246925592c5b2ca3a94158046674362e5e1",
+                "reference": "ceaf4246925592c5b2ca3a94158046674362e5e1",
                 "shasum": ""
             },
             "require": {
@@ -748,7 +748,7 @@
                 }
             ],
             "description": "Common libraries for USF Identity Management services.",
-            "time": "2015-01-15 18:08:32"
+            "time": "2015-02-20 03:59:43"
         }
     ],
     "packages-dev": [],

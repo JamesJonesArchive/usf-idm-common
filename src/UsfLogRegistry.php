@@ -37,6 +37,8 @@ class UsfLogRegistry {
      */
     private $defaultLogLevel = 'warn';
 
+    private $defaultLogHandler = 'log';
+
     private static $instance;
 
     /**
@@ -73,7 +75,7 @@ class UsfLogRegistry {
 
         //Add the web processor if this is not running on the command-line
         if (php_sapi_name() !== "cli") {
-            $this->logRegistry[$name]->addProcessor('web');
+            $this->logRegistry[$name]->addLogProcessor('web');
         }
     }
 
@@ -116,6 +118,73 @@ class UsfLogRegistry {
     }
 
     /**
+     * Set the default log handler.
+     *
+     * @param string $logHandler
+     * @throws \Exception
+     */
+    public function setDefaultHandler($name){
+        if (! array_key_exists($name,$this->logRegistry)){
+            throw new \Exception('LogHandler named ['.$name.'] does not exist');
+        }
+        $this->defaultLogHandler = $name;
+    }
+
+    public function debug($message, array $context = array()){
+        return $this->logRegistry[$this->defaultLogHandler]->debug($message, $context);
+    }
+
+    public function info($message, array $context = array()){
+        return $this->logRegistry[$this->defaultLogHandler]->info($message, $context);
+    }
+
+    public function notice($message, array $context = array()){
+        return $this->logRegistry[$this->defaultLogHandler]->notice($message, $context);
+    }
+
+    public function warn($message, array $context = array()){
+        return $this->logRegistry[$this->defaultLogHandler]->warning($message, $context);
+    }
+
+    public function warning($message, array $context = array()){
+        return $this->logRegistry[$this->defaultLogHandler]->warning($message, $context);
+    }
+
+    public function err($message, array $context = array()){
+        return $this->logRegistry[$this->defaultLogHandler]->error($message, $context);
+    }
+
+    public function error($message, array $context = array()){
+        return $this->logRegistry[$this->defaultLogHandler]->error($message, $context);
+    }
+
+    public function crit($message, array $context = array()){
+        return $this->logRegistry[$this->defaultLogHandler]->critical($message, $context);
+    }
+
+    public function critical($message, array $context = array()){
+        return $this->logRegistry[$this->defaultLogHandler]->critical($message, $context);
+    }
+
+    // For Slim framework
+    public function fatal($message, array $context = array()){
+        return $this->logRegistry[$this->defaultLogHandler]->critical($message, $context);
+    }
+
+    public function alert($message, array $context = array()){
+        return $this->logRegistry[$this->defaultLogHandler]->alert($message, $context);
+    }
+
+    public function emerg($message, array $context = array()){
+        return $this->logRegistry[$this->defaultLogHandler]->emergency($message, $context);
+    }
+
+    public function emergency($message, array $context = array()){
+        return $this->logRegistry[$this->defaultLogHandler]->emergency($message, $context);
+    }
+
+
+    /**
      * "Magic" method for returning an entry in the registry as an object property.
      *
      * @param string $name
@@ -125,7 +194,4 @@ class UsfLogRegistry {
         return $this->logRegistry[$name];
     }
 
-    private function __construct(){}
-
-    private function __clone(){}
 }

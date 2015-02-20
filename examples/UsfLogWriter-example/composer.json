@@ -1,0 +1,8 @@
+{
+"require": {
+        "usf-it/usf-auth": "dev-develop",
+        "usf-it/usf-idm-common": "dev-develop",
+        "slim/slim": ">=2.3.0",
+        "php": ">=5.3.0"
+    }
+}

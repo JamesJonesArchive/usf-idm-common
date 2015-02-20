@@ -73,7 +73,7 @@ class UsfLogRegistry {
 
         //Add the web processor if this is not running on the command-line
         if (php_sapi_name() !== "cli") {
-            $this->logRegistry[$name]->addProcessor('web');
+            $this->logRegistry[$name]->addLogProcessor('web');
         }
     }
 
@@ -125,7 +125,4 @@ class UsfLogRegistry {
         return $this->logRegistry[$name];
     }
 
-    private function __construct(){}
-
-    private function __clone(){}
 }

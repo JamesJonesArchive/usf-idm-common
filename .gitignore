@@ -10,3 +10,4 @@ examples/config/*.local.*
 # composer.lock
 
 .DS_Store
+/nbproject/

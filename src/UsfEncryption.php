@@ -36,9 +36,9 @@ class UsfEncryption {
      */
     public static function encrypt($key, $input, $filename_safe = FALSE) {
         srand((double) microtime() * 1000000); //for MCRYPT_RAND
-        $size = mcrypt_get_block_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_CBC);
+        $size = mcrypt_get_block_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
         $input = UsfEncryption::pkcs5_pad($input, $size);
-        $td = mcrypt_module_open(MCRYPT_RIJNDAEL_256, '', MCRYPT_MODE_CBC, '');
+        $td = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_CBC, '');
         $iv = mcrypt_create_iv(mcrypt_enc_get_iv_size($td), MCRYPT_RAND);
         mcrypt_generic_init($td, $key, $iv);
         $data = mcrypt_generic($td, $input);
@@ -54,7 +54,10 @@ class UsfEncryption {
     }
 
     public static function decrypt($key, $input) {
-        $td = mcrypt_module_open(MCRYPT_RIJNDAEL_256, '', MCRYPT_MODE_CBC, '');
+        $td = mcrypt_module_open(MCRYPT_RIJNDAEL_128, '', MCRYPT_MODE_CBC, '');
+
+        // revert URLSafe base64 encoding to regular base64 encoding
+        $input = strtr($input, '-_', '+/');
 
         // Split the IV from the ciphertext
         $iv = substr(base64_decode($input), 0, mcrypt_enc_get_iv_size($td));
@@ -65,3 +68,4 @@ class UsfEncryption {
         return mdecrypt_generic($td, $cipher);
     }
 }
+?>

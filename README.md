@@ -14,6 +14,7 @@ Composer package of common libraries for USF Identity Management services.  This
     * SMS, using [Twilio](http://twilio.com) API
 * `UsfLogRegistry` provides a single object holding multiple `UsfLogger` instances.
 * `SlimLogMiddleware` adapts `UsfLogRegistry` to the [Slim](http://slimframework.com) PHP framework.
+* `ImageServiceClient` provides a simple client for [ImageService](https://github.com/USF-IT/ImageService).
 
 
 Installation
@@ -23,7 +24,7 @@ To install usf-idm-common with composer, add this to your composer.json:
 ```
 {
   "require": {
-    "usf-it/usf-idm-common": "0.2.0"
+    "usf-it/usf-idm-common": "0.3.0"
   }
 }
 ```
@@ -52,6 +53,27 @@ echo "Decrypted string: ".UsfEncryption::decrypt($key, $crypt);
 
 ?>
 ```
+
+ImageServiceClient
+----
+
+Here is an example of getting the URL for the user 'U12345678':
+
+```php
+<?php
+
+require_once ('vendor/autoload.php');
+
+use USF\IdM\ImageServiceClient;
+
+$appName = "myApp"
+$appKey = "12345678901234561234567890123456";
+
+echo getImageURL('http', 'image.example.edu', 8080, '/ImageService', 'U12345678', $appName, $appKey);
+
+?>
+```
+
 
 UsfConfig
 ----

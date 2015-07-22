@@ -24,7 +24,7 @@ To install usf-idm-common with composer, add this to your composer.json:
 ```
 {
   "require": {
-    "usf-it/usf-idm-common": "0.2.0"
+    "usf-it/usf-idm-common": "0.3.0"
   }
 }
 ```

@@ -57,6 +57,22 @@ class NamsIdentifierConversionClient
         }
     }
 
+    public function searchByName($searchTerm)
+    {
+        if (empty($this->_nams_host)) {
+            throw new \Exception('NAMS host not set!', 500);
+        }
+
+        $response = $this->_rest_client->get("https://$this->_nams_host/vip/services/vip_person_search.php?value=$searchTerm");
+
+        $res_data = $response->json();
+        if ($res_data['response'] == 'success') {
+            return $res_data;
+        } else {
+            return [];
+        }
+    }
+
     private function _validateNamsConfig(array $cas_config)
     {
         if (!isset($cas_config['cas_host'])) {
@@ -75,4 +91,3 @@ class NamsIdentifierConversionClient
         return true;
     }
 }
-

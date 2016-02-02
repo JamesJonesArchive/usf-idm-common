@@ -3,7 +3,7 @@ usf-idm-common
 
 Composer package of common libraries for USF Identity Management services.  This package provides these classes:
 
-* `UsfEncryption` provides AES-256 encryption and decryption routines compatible with Java and C# implentations used at USF.
+* `UsfEncryption` provides AES-256 encryption and decryption routines compatible with Java and C# implementations used at USF.
 * `UsfConfig` wraps the [Configula](https://github.com/caseyamcl/Configula) PHP configuration library.
 * `UsfLogger` wraps the [Monolog](https://github.com/Seldaek/monolog) PHP logging library.
   * Provides handlers for writing logs to:
@@ -13,9 +13,11 @@ Composer package of common libraries for USF Identity Management services.  This
     * Email, using the [Swift-Mailer](http://swiftmailer.org) library
     * SMS, using [Twilio](http://twilio.com) API
 * `UsfLogRegistry` provides a single object holding multiple `UsfLogger` instances.
-* `SlimLogMiddleware` adapts `UsfLogRegistry` to the [Slim](http://slimframework.com) PHP framework.
+* `SlimLogMiddleware` adapts `UsfLogRegistry` to the [Slim 2](http://slimframework.com) PHP framework.
+* `RequestResultLogger` Slim 3 Middleware for logging request data.
 * `ImageServiceClient` provides a simple client for [ImageService](https://github.com/USF-IT/ImageService).
-
+* `NamsIdentifierConverstionClient` provides a simple client for the ws_convert web service.
+* Slim 3 testing tools.
 
 Installation
 ----
@@ -24,7 +26,7 @@ To install usf-idm-common with composer, add this to your composer.json:
 ```
 {
   "require": {
-    "usf-it/usf-idm-common": "^0.4.0"
+    "usf-it/usf-idm-common": "^0.5.0"
   }
 }
 ```
@@ -33,7 +35,7 @@ and run `composer update`.
 UsfEncryption
 ----
 
-PHP must have access to the MCRYPT library for this encryption library to function.  Here is an example of encrypting and decrypting a string:
+Here is an example of encrypting and decrypting a string:
 
 ```php
 <?php
@@ -64,7 +66,7 @@ Here is an example of getting the URL for the user 'U12345678':
 
 require_once ('vendor/autoload.php');
 
-use USF\IdM\ImageServiceClient;
+use USF\IdM\Clients\ImageServiceClient;
 
 $appName = "myApp"
 $appKey = "12345678901234561234567890123456";
@@ -81,7 +83,7 @@ This is a simple wrapper around [Configula](https://github.com/caseyamcl/Configu
 
 * Scans a given directory for configuration files and merges the data into one configuration object.
 * Works with _.php_, _.ini_, _.json_, and _.yml_ configuration file types
-* Supports "local" configuration files that override the default configuration files. 
+* Supports "local" configuration files that override the default configuration files.
 * Simple usage:
 
 ```
@@ -102,7 +104,7 @@ foreach ($config as $item => $value) {
 
 ####Notes
 
-* The UsfConfig object, once instantiated, is immutable, meaning that it is read-only.  You can not alter the config values.  You can, however, create as many UsfConfig objects as you would like. 
+* The UsfConfig object, once instantiated, is immutable, meaning that it is read-only.  You can not alter the config values.  You can, however, create as many UsfConfig objects as you would like.
 * If any configuration file contains invalid code (invalid PHP or malformed JSON, for example), the Configula class will not throw an error.  Instead, it will simply skip reading that file.
 * When working with PHP files, UsfConfig will look for an array called $config in this file.
 
@@ -134,7 +136,7 @@ use USF\IdM\UsfLogRegistry;
 // Create an instance of UsfLogRegistry
 $logger = UsfLogRegistry::getInstance();
 
-// Calling addLogger with no options creates a loghandler named 'log' that 
+// Calling addLogger with no options creates a loghandler named 'log' that
 // writes messages to /var/log/usf-logger.log
 $logger->addLogger();
 
@@ -221,7 +223,7 @@ To add the middleware to your Slim project and use log all output to `/tmp/audit
 
 ```php
 <?php
-use \USF\auth\SlimLogMiddleware;
+use \USF\IdM\SlimLogMiddleware;
 
 require_once('vendor/autoload.php');
 
@@ -236,61 +238,61 @@ $app->add(new SlimLogMiddleware());
 
 $app->get('/foo', function () use ($app) {
     echo ("Logging an alert!");
-    
+
     //Use the default log handler
     $app->log->alert('this is an alert!');
-    
+
     // Use a named log handler
     $app->log->audit->info('This is an informational message with extra data', ['foo' => 'bar']);
-    
+
 });
 $app->run();
 ```
 
-The `log.config` variable contains an array of config values for Monolog log handlers.  The `name`, `type`, and `config` keys correspond to the parameters 
+The `log.config` variable contains an array of config values for Monolog log handlers.  The `name`, `type`, and `config` keys correspond to the parameters
 for `UsfLogRegistry->addLogger()` and the `processor` key adds the named log processor to the that log handler.  The `default` key should be set to true to
  make that the default log handler for the Slim framework.  If no handler has `default` set to true, the first one in the list will be used.
- 
+
  #####Log to different files
- 
+
  ```php
  <?php
  use \USF\auth\SlimLogMiddleware;
- 
+
  require_once('vendor/autoload.php');
- 
+
  $app = new \Slim\Slim();
- 
+
  $app->environment['log.config'] = [
      ['name'=>'log', 'type' => 'file', 'default' => true, 'config' => ['log_location' => '/tmp/application.log']],
      ['name'=>'audit', 'type' => 'file', 'default' => false, 'config' => ['log_location' => '/tmp/audit.log', 'log_level' => 'info']]
  ];
- 
+
  //Add the Log Middleware
  $app->add(new SlimLogMiddleware());
- 
+
  $app->get('/foo', function () use ($app) {
      // This message will only go to /tmp/application.log
      $app->log->warn('This is a test message.');
-     
+
      // This message will only go to /tmp/audit_log
      $app->log->audit->info('User login',['username login', 'timestamp' => date(DATE_RFC2822)]);
-     
+
  });
  $app->run();
  ```
- 
+
  #####Logging to multiple handlers based on severity
- 
+
  ```php
  <?php
- 
+
 use \USF\auth\SlimLogMiddleware;
-  
+
 require_once('vendor/autoload.php');
-  
+
 $app = new \Slim\Slim();
- 
+
  //Configure email handler
  $mailConfig = [
      'log_level' => 'error',
@@ -304,26 +306,26 @@ $app = new \Slim\Slim();
      // one or more email addresses the logs will go to
      'to' => ['my_address@example.edu']
  ];
- 
+
  // Configure a logger (log) with two handlers: one that logs to a file and one that sends emails
  $app->environment['log.config'] = [
       ['name'=>'log', 'type' => 'file', 'default' => true, 'config' => ['log_location' => '/tmp/application.log']],
       ['name'=>'log', 'type' => 'mail', 'config' => $mailConfig]
   ];
- 
+
  //Add the Log Middleware
   $app->add(new SlimLogMiddleware());
-  
+
   $app->get('/foo', function () use ($app) {
-  
+
     // This message will only be logged to a file
     $app->log->warn('This is a warning');
-    
+
     //This message will be logged to file AND emailed
     $app->log->critical('Critical Problem!!', ['var1' => 'true', 'var2' => 'false']);
-      
+
   });
   $app->run();
- 
+
  ?>
  ```

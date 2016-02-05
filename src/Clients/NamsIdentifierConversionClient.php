@@ -21,70 +21,69 @@ use epierce\CasRestClient;
 
 class NamsIdentifierConversionClient
 {
-    private $_rest_client;
-    private $_nams_host;
+    private $restClient;
+    private $namsHost;
 
-    public function __construct(array $cas_config)
+    public function __construct(array $casConfig)
     {
-        if ($this->_validateNamsConfig($cas_config)) {
-            $this->_rest_client = new CasRestClient();
-            $this->_rest_client->setCasServer($cas_config['cas_host']);
-            $this->_rest_client->setCasRestContext('/v1/tickets');
-            $this->_rest_client->verifySSL(false);
-            $this->_rest_client->setCredentials($cas_config['cas_user'], $cas_config['cas_password']);
-            $this->_rest_client->login($cas_config['ticket_storage']);
+        if ($this->validateNamsConfig($casConfig)) {
+            $this->restClient = new CasRestClient();
+            $this->restClient->setCasServer($casConfig['cas_host']);
+            $this->restClient->setCasRestContext('/v1/tickets');
+            $this->restClient->verifySSL(false);
+            $this->restClient->setCredentials($casConfig['cas_user'], $casConfig['cas_password']);
+            $this->restClient->login($casConfig['ticket_storage']);
         }
     }
 
     public function setNamsHost($host)
     {
-        $this->_nams_host = $host;
+        $this->namsHost = $host;
     }
 
     public function convertIdentifier($inputType, $outputType, $inputId)
     {
-        if (empty($this->_nams_host)) {
+        if (empty($this->namsHost)) {
             throw new \Exception('NAMS host not set!', 500);
         }
 
-        $response = $this->_rest_client->get("https://$this->_nams_host/vip/services/ws_convert.php?submit_type=$inputType&return_type=$outputType&return=json&value=$inputId");
+        $response = $this->restClient->get("https://$this->namsHost/vip/services/ws_convert.php?submit_type=$inputType&return_type=$outputType&return=json&value=$inputId");
 
-        $res_data = $response->json();
-        if ($res_data['response'] == 'success') {
-            return $res_data[$outputType];
-        } else {
-            return [];
+        $responseData = $response->json();
+        if ($responseData['response'] == 'success') {
+            return $responseData[$outputType];
         }
+        return [];
     }
 
     public function searchByName($searchTerm)
     {
-        if (empty($this->_nams_host)) {
+        if (empty($this->namsHost)) {
             throw new \Exception('NAMS host not set!', 500);
         }
 
-        $response = $this->_rest_client->get("https://$this->_nams_host/vip/services/vip_person_search.php?value=$searchTerm");
+        $response = $this->restClient->get("https://$this->namsHost/vip/services/vip_person_search.php?value=$searchTerm");
 
-        $res_data = $response->json();
-        if ($res_data['response'] == 'success') {
-            return $res_data;
-        } else {
-            return [];
+        $responseData = json_decode($response->getBody(), true);
+        if ($responseData['response'] == 'success') {
+            return $responseData;
         }
+
+        return [];
     }
 
-    private function _validateNamsConfig(array $cas_config)
+    private function validateNamsConfig(array $casConfig)
     {
-        if (!isset($cas_config['cas_host'])) {
+        if (!isset($casConfig['cas_host'])) {
             throw new \Exception('CAS host not set!', 500);
         }
-        if (!isset($cas_config['cas_user'])) {
+        if (!isset($casConfig['cas_user'])) {
             throw new \Exception('CAS user not set!', 500);
         }
-        if (!isset($cas_config['cas_password'])) {
+        if (!isset($casConfig['cas_password'])) {
             throw new \Exception('CAS password not set!', 500);
         }
-        if (!isset($cas_config['ticket_storage'])) {
+        if (!isset($casConfig['ticket_storage'])) {
             throw new \Exception('CAS Ticket storage not set!', 500);
         }
 

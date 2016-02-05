@@ -49,7 +49,7 @@ class NamsIdentifierConversionClient
 
         $response = $this->restClient->get("https://$this->namsHost/vip/services/ws_convert.php?submit_type=$inputType&return_type=$outputType&return=json&value=$inputId");
 
-        $responseData = $response->json();
+        $responseData = json_decode($response->getBody(), true);
         if ($responseData['response'] == 'success') {
             return $responseData[$outputType];
         }

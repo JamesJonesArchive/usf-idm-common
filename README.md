@@ -17,20 +17,15 @@ Composer package of common libraries for USF Identity Management services.  This
 * `RequestResultLogger` Slim 3 Middleware for logging request data.
 * `ImageServiceClient` provides a simple client for [ImageService](https://github.com/USF-IT/ImageService).
 * `NamsIdentifierConverstionClient` provides a simple client for the ws_convert web service.
-* Slim 3 testing tools.
+* Slim 2 testing tools.
 
 Installation
 ----
-To install usf-idm-common with composer, add this to your composer.json:
+Install `usf-idm-common` using Composer.
 
 ```
-{
-  "require": {
-    "usf-it/usf-idm-common": "^0.5.0"
-  }
-}
+$ composer require usf-it/usf-idm-common
 ```
-and run `composer update`.
 
 UsfEncryption
 ----

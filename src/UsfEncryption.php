@@ -1,67 +1,104 @@
 <?php
 /**
- * Copyright 2015 University of South Florida
+ *   Copyright 2015 University of South Florida
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *       http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- **/
-
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *
+ * @category USF/IT
+ * @package PeopleSoftAuthenticator
+ * @author Eric Pierce <epierce@usf.edu>
+ * @license http://www.apache.org/licenses/LICENSE-2.0 Apache2.0
+ * @link https://github.com/USF-IT/PeopleSoftAuthenticator
+ */
 namespace USF\IdM;
 
+use phpseclib\Crypt\Rijndael;
+use phpseclib\Crypt\Random;
+use MIME\Base64URLSafe;
 
-class UsfEncryption {
+/**
+ * Encrypt data with AES
+ *
+ * @category USF/IT
+ * @package usf-idm-coomon
+ * @author Eric Pierce <epierce@usf.edu>
+ * @license http://www.apache.org/licenses/LICENSE-2.0 Apache2.0
+ * @link https://github.com/USF-IT/usf-idm-common
+ */
+class UsfEncryption
+{
 
-    private static function pkcs5_pad ($text, $blocksize) {
-        $pad = $blocksize - (strlen($text) % $blocksize);
-        return $text . str_repeat(chr($pad), $pad);
-    }
+    public static function encrypt($encryptionKey, $textInput, $blockType = 'CBC', $urlSafe = false) {
+        switch ($blockType) {
+            case 'CBC':
+                $cipher = new Rijndael(Rijndael::MODE_CBC);
+                $cipher->setKey($encryptionKey);
+                $iv = Random::string($cipher->getBlockLength() >> 3);
+                $cipher->setIV($iv);
+                break;
 
-    /**
-     * @param string $key Encryption key
-     * @param string $input Plaintext to encrypt
-     * @param bool $filename_safe Use a filename-safe alphabet
-     * @return string
-     *
-     * Generate a random initialization vector (IV) and encrypt data using AES256.  Combines the IV with the ciphertext
-     * and Base64 encodes the results.
-     */
-    public static function encrypt($key, $input, $filename_safe = FALSE) {
-        srand((double) microtime() * 1000000); //for MCRYPT_RAND
-        $size = mcrypt_get_block_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_CBC);
-        $input = UsfEncryption::pkcs5_pad($input, $size);
-        $td = mcrypt_module_open(MCRYPT_RIJNDAEL_256, '', MCRYPT_MODE_CBC, '');
-        $iv = mcrypt_create_iv(mcrypt_enc_get_iv_size($td), MCRYPT_RAND);
-        mcrypt_generic_init($td, $key, $iv);
-        $data = mcrypt_generic($td, $input);
-        mcrypt_generic_deinit($td);
-        mcrypt_module_close($td);
-        $base64Data = base64_encode($iv.$data);
+            case 'ECB':
+                $cipher = new Rijndael(Rijndael::MODE_ECB);
+                $cipher->setKey($encryptionKey);
+                $iv = '';
+                break;
 
-        if ($filename_safe){
-            return rtrim(strtr($base64Data, '+/', '-_'), '=');
+            default:
+                throw new \Exception('Unknown encryption blocktype: '.$blockType, 500);
+                break;
+        }
+
+        $encryptedResult = $iv.$cipher->encrypt($textInput);
+
+        if ($urlSafe) {
+            return Base64URLSafe::urlsafe_b64encode($encryptedResult);
         } else {
-            return $base64Data;
+            return base64_encode($encryptedResult);
         }
     }
 
-    public static function decrypt($key, $input) {
-        $td = mcrypt_module_open(MCRYPT_RIJNDAEL_256, '', MCRYPT_MODE_CBC, '');
+    public static function decrypt($encryptionKey, $encryptedString, $blockType = 'CBC', $urlSafe = false) {
 
-        // Split the IV from the ciphertext
-        $iv = substr(base64_decode($input), 0, mcrypt_enc_get_iv_size($td));
-        $cipher = substr(base64_decode($input), mcrypt_enc_get_iv_size($td), strlen($input));
+        if ($urlSafe) {
+            $data = Base64URLSafe::urlsafe_b64decode($encryptedString);
+        } else {
+            $data = base64_decode($encryptedString);
+        }
 
-        mcrypt_generic_init($td, $key, $iv);
+        switch ($blockType) {
+            case 'CBC':
+                $cipher = new Rijndael(Rijndael::MODE_CBC);
+                $cipher->setKey($encryptionKey);
 
-        return mdecrypt_generic($td, $cipher);
+                 // Split the IV from the ciphertext
+                $iv = substr($data, 0, $cipher->getBlockLength() >> 3);
+                $cipherText = substr($data, $cipher->getBlockLength() >> 3, strlen($encryptedString));
+
+                $cipher->setIV($iv);
+                break;
+
+            case 'ECB':
+                $cipher = new Rijndael(Rijndael::MODE_ECB);
+                $cipher->setKey($encryptionKey);
+                $cipherText = $data;
+                break;
+
+            default:
+                throw new \Exception('Unknown encryption blocktype: '.$blockType, 500);
+                break;
+        }
+
+        return $cipher->decrypt($cipherText);
     }
 }
+
